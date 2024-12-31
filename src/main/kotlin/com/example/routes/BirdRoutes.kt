@@ -26,13 +26,26 @@ fun Route.birdRoutes() {
         }
 
         get("/{id}") {
-            val id = call.parameters["id"]?.let { ObjectId(it) }
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            
-            val bird = repository.findById(id)
-                ?: return@get call.respond(HttpStatusCode.NotFound, "Bird not found")
-            
-            call.respond(bird)
+            val idString = call.parameters["id"] ?: return@get call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "ID parameter is required")
+            )
+
+            try {
+                val id = ObjectId(idString)
+                val bird = repository.findById(id)
+                    ?: return@get call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf("error" to "Bird not found")
+                    )
+                
+                call.respond(bird)
+            } catch (e: IllegalArgumentException) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Invalid ID format")
+                )
+            }
         }
 
         // Protected endpoints
@@ -44,29 +57,55 @@ fun Route.birdRoutes() {
             }
 
             put("/{id}") {
-                val id = call.parameters["id"]?.let { ObjectId(it) }
-                    ?: return@put call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-                
-                val bird = call.receive<Bird>()
-                val updated = repository.update(id, bird)
-                
-                if (updated) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "Bird not found")
+                val idString = call.parameters["id"] ?: return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "ID parameter is required")
+                )
+
+                try {
+                    val id = ObjectId(idString)
+                    val bird = call.receive<Bird>()
+                    val updated = repository.update(id, bird)
+                    
+                    if (updated) {
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            mapOf("error" to "Bird not found")
+                        )
+                    }
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Invalid ID format")
+                    )
                 }
             }
 
             delete("/{id}") {
-                val id = call.parameters["id"]?.let { ObjectId(it) }
-                    ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-                
-                val deleted = repository.delete(id)
-                
-                if (deleted) {
-                    call.respond(HttpStatusCode.NoContent)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "Bird not found")
+                val idString = call.parameters["id"] ?: return@delete call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "ID parameter is required")
+                )
+
+                try {
+                    val id = ObjectId(idString)
+                    val deleted = repository.delete(id)
+                    
+                    if (deleted) {
+                        call.respond(HttpStatusCode.NoContent)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            mapOf("error" to "Bird not found")
+                        )
+                    }
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Invalid ID format")
+                    )
                 }
             }
         }
