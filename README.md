@@ -1,14 +1,6 @@
 # Bird Watching API
 
-Bu proje, kuş gözlemcileri için geliştirilmiş bir backend API'dir. Kullanıcılar kuş türlerini kaydedebilir, gözlemlerini paylaşabilir ve diğer gözlemcilerle etkileşimde bulunabilir.
-
-## Özellikler
-
-- Kullanıcı yönetimi (kayıt, giriş, JWT tabanlı kimlik doğrulama)
-- Kuş türleri yönetimi (ekleme, düzenleme, silme, listeleme)
-- Gözlem kayıtları (konum bazlı gözlem kayıtları)
-- Dosya yükleme desteği (kuş fotoğrafları için)
-- MongoDB veritabanı entegrasyonu
+Bu proje, kuş gözlem kayıtlarını tutmak için geliştirilmiş bir REST API'dir.
 
 ## Teknolojiler
 
@@ -16,21 +8,22 @@ Bu proje, kuş gözlemcileri için geliştirilmiş bir backend API'dir. Kullanı
 - Ktor Framework
 - MongoDB
 - JWT Authentication
-- Gradle
+
+## Özellikler
+
+- Kullanıcı yönetimi (kayıt, giriş)
+- Kuş türleri yönetimi
+- Gözlem kayıtları
+- Dosya yükleme sistemi
+- JWT tabanlı kimlik doğrulama
 
 ## Kurulum
 
-1. Projeyi klonlayın:
+1. MongoDB'yi yükleyin ve başlatın
+2. Projeyi klonlayın:
 ```bash
-git clone https://github.com/[YOUR_USERNAME]/bird-watching-api.git
+git clone [repository-url]
 ```
-
-2. MongoDB'yi kurun ve başlatın:
-```bash
-# MongoDB'yi başlatın
-mongod
-```
-
 3. Projeyi çalıştırın:
 ```bash
 ./gradlew run
@@ -41,34 +34,31 @@ mongod
 ### Kullanıcı İşlemleri
 - `POST /api/users/register` - Yeni kullanıcı kaydı
 - `POST /api/users/login` - Kullanıcı girişi
-- `GET /api/users/{id}` - Kullanıcı bilgilerini görüntüleme
 
 ### Kuş Türleri
-- `GET /api/birds` - Tüm kuş türlerini listeleme
-- `GET /api/birds/{id}` - Belirli bir kuş türünü görüntüleme
-- `POST /api/birds` - Yeni kuş türü ekleme (JWT gerekli)
-- `PUT /api/birds/{id}` - Kuş türü güncelleme (JWT gerekli)
-- `DELETE /api/birds/{id}` - Kuş türü silme (JWT gerekli)
+- `GET /api/birds` - Tüm kuş türlerini listele
+- `GET /api/birds/{id}` - Belirli bir kuş türünü görüntüle
+- `POST /api/birds` - Yeni kuş türü ekle
+- `PUT /api/birds/{id}` - Kuş türü güncelle
+- `DELETE /api/birds/{id}` - Kuş türü sil
 
 ### Gözlemler
-- `GET /api/observations` - Tüm gözlemleri listeleme (JWT gerekli)
-- `POST /api/observations` - Yeni gözlem ekleme (JWT gerekli)
-- `PUT /api/observations/{id}` - Gözlem güncelleme (JWT gerekli)
-- `DELETE /api/observations/{id}` - Gözlem silme (JWT gerekli)
+- `GET /api/observations` - Tüm gözlemleri listele
+- `POST /api/observations` - Yeni gözlem ekle
+- `PUT /api/observations/{id}` - Gözlem güncelle
+- `DELETE /api/observations/{id}` - Gözlem sil
 
 ### Dosya İşlemleri
-- `POST /api/files/upload` - Dosya yükleme (JWT gerekli)
-- `GET /api/files/download/{fileName}` - Dosya indirme (JWT gerekli)
-- `DELETE /api/files/{fileName}` - Dosya silme (JWT gerekli)
+- `POST /api/files/upload` - Dosya yükle
+- `GET /api/files/download/{fileName}` - Dosya indir
+- `DELETE /api/files/{fileName}` - Dosya sil
 
 ## Geliştirme
 
-1. Projeyi fork'layın
+Projeyi geliştirmek için:
+
+1. Fork'layın
 2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
 3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
 4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
-5. Pull Request oluşturun
-
-## Lisans
-
-Bu proje MIT lisansı altında lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakın. 
+5. Pull Request oluşturun 
