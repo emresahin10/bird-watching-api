@@ -4,7 +4,8 @@ import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
 
 object MongoDB {
-    private val client = KMongo.createClient("mongodb://localhost:27017").coroutine
+    private val mongoUrl = System.getenv("MONGODB_URL") ?: "mongodb://localhost:27017"
+    private val client = KMongo.createClient(mongoUrl).coroutine
     val database = client.getDatabase("bird_watching_db")
 
     // Collections

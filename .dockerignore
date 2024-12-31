@@ -1,0 +1,13 @@
+.gradle
+.git
+.gitignore
+.idea
+build/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/
+uploads/
+.env
+*.db 
