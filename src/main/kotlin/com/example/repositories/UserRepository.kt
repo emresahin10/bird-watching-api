@@ -15,6 +15,9 @@ class UserRepository {
     suspend fun findByEmail(email: String): User? =
         collection.findOne(User::email eq email)
 
+    suspend fun findByRefreshToken(refreshToken: String): User? =
+        collection.findOne(User::refreshToken eq refreshToken)
+
     suspend fun create(user: User): User {
         collection.insertOne(user)
         return user
@@ -24,6 +27,15 @@ class UserRepository {
         val update = set(
             User::email setTo user.email,
             User::name setTo user.name,
+            User::updatedAt setTo System.currentTimeMillis()
+        )
+        return collection.updateOneById(id, update).modifiedCount == 1L
+    }
+
+    suspend fun updateRefreshToken(id: ObjectId, refreshToken: String?, refreshTokenExpiresAt: Long?): Boolean {
+        val update = set(
+            User::refreshToken setTo refreshToken,
+            User::refreshTokenExpiresAt setTo refreshTokenExpiresAt,
             User::updatedAt setTo System.currentTimeMillis()
         )
         return collection.updateOneById(id, update).modifiedCount == 1L

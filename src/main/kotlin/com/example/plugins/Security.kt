@@ -5,6 +5,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.DecodedJWT
 import java.util.*
 
 fun Application.configureSecurity() {
@@ -48,12 +49,32 @@ object JWTConfig {
     lateinit var secret: String
     lateinit var issuer: String
     lateinit var audience: String
-    private const val validityInMs = 36_000_00 * 10 // 10 hours
+    private const val accessTokenValidityInMs = 3600000 // 1 hour
+    private const val refreshTokenValidityInMs = 2592000000 // 30 days
 
-    fun makeToken(userId: String): String = JWT.create()
+    fun makeAccessToken(userId: String): String = JWT.create()
         .withAudience(audience)
         .withIssuer(issuer)
         .withClaim("userId", userId)
-        .withExpiresAt(Date(System.currentTimeMillis() + validityInMs))
+        .withExpiresAt(Date(System.currentTimeMillis() + accessTokenValidityInMs))
         .sign(Algorithm.HMAC256(secret))
+
+    fun makeRefreshToken(userId: String): String = JWT.create()
+        .withAudience(audience)
+        .withIssuer(issuer)
+        .withClaim("userId", userId)
+        .withExpiresAt(Date(System.currentTimeMillis() + refreshTokenValidityInMs))
+        .sign(Algorithm.HMAC256(secret))
+
+    fun verifyToken(token: String): DecodedJWT? {
+        return try {
+            JWT.require(Algorithm.HMAC256(secret))
+                .withAudience(audience)
+                .withIssuer(issuer)
+                .build()
+                .verify(token)
+        } catch (e: Exception) {
+            null
+        }
+    }
 } 

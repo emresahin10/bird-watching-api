@@ -62,7 +62,7 @@ fun Route.fileRoutes() {
                             result.fold(
                                 onSuccess = { fileName ->
                                     // Add full URL to the response
-                                    val fileUrl = "${call.request.origin.scheme}://${call.request.origin.host}:${call.request.origin.port}/api/files/view/$fileName"
+                                    val fileUrl = "${call.request.local.scheme}://${call.request.local.host}:${call.request.local.port}/api/files/view/$fileName"
                                     uploadResults.add(mapOf(
                                         "fileName" to fileName,
                                         "fileUrl" to fileUrl,

@@ -7,15 +7,17 @@ Bu proje, kuş gözlem kayıtlarını tutmak için geliştirilmiş bir REST API'
 - Kotlin
 - Ktor Framework
 - MongoDB
-- JWT Authentication
+- JWT Authentication (Access Token & Refresh Token)
 
 ## Özellikler
 
-- Kullanıcı yönetimi (kayıt, giriş)
+- Kullanıcı yönetimi (kayıt, giriş, token yenileme)
 - Kuş türleri yönetimi
 - Gözlem kayıtları
 - Dosya yükleme sistemi
 - JWT tabanlı kimlik doğrulama
+  - Access Token (1 saat geçerli)
+  - Refresh Token (30 gün geçerli)
 
 ## Kurulum
 
@@ -68,7 +70,8 @@ Content-Type: application/json
 Başarılı Yanıt:
 ```json
 {
-    "token": "JWT_TOKEN",
+    "accessToken": "eyJ0...", // 1 saat geçerli
+    "refreshToken": "eyJ1...", // 30 gün geçerli
     "user": {
         "id": "user_id",
         "email": "user@example.com",
@@ -77,12 +80,41 @@ Başarılı Yanıt:
 }
 ```
 
+#### Token Yenileme
+```http
+POST /api/users/refresh-token
+Content-Type: application/json
+
+{
+    "refreshToken": "eyJ1..."
+}
+```
+
+Başarılı Yanıt:
+```json
+{
+    "accessToken": "eyJ0..."
+}
+```
+
+#### Çıkış Yapma
+```http
+POST /api/users/logout
+Content-Type: application/json
+
+{
+    "refreshToken": "eyJ1..."
+}
+```
+
+Başarılı Yanıt: HTTP 200 OK
+
 ### Kuş Türleri
 
 #### Tüm Kuşları Listele
 ```http
 GET /api/birds
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 
 # Opsiyonel Query Parametreleri:
 # name: Kuş adına göre filtreleme
@@ -108,13 +140,13 @@ Başarılı Yanıt:
 #### Belirli Bir Kuşu Görüntüle
 ```http
 GET /api/birds/{id}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 ```
 
 #### Yeni Kuş Ekle
 ```http
 POST /api/birds
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -129,7 +161,7 @@ Content-Type: application/json
 #### Kuş Bilgilerini Güncelle
 ```http
 PUT /api/birds/{id}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -144,7 +176,7 @@ Content-Type: application/json
 #### Kuş Kaydını Sil
 ```http
 DELETE /api/birds/{id}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 ```
 
 ### Gözlemler
@@ -152,7 +184,7 @@ Authorization: Bearer JWT_TOKEN
 #### Tüm Gözlemleri Listele
 ```http
 GET /api/observations
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 
 # Opsiyonel Query Parametreleri:
 # userId: Kullanıcıya göre filtreleme
@@ -183,7 +215,7 @@ Başarılı Yanıt:
 #### Yeni Gözlem Ekle
 ```http
 POST /api/observations
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -201,7 +233,7 @@ Content-Type: application/json
 #### Gözlem Bilgilerini Güncelle
 ```http
 PUT /api/observations/{id}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -218,7 +250,7 @@ Content-Type: application/json
 #### Gözlem Kaydını Sil
 ```http
 DELETE /api/observations/{id}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 ```
 
 ### Dosya İşlemleri
@@ -226,7 +258,7 @@ Authorization: Bearer JWT_TOKEN
 #### Dosya Yükleme
 ```http
 POST /api/files/upload
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 Content-Type: multipart/form-data
 
 # Form parametresi:
@@ -256,13 +288,13 @@ GET /api/files/view/{fileName}
 #### Dosya İndirme
 ```http
 GET /api/files/download/{fileName}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 ```
 
 #### Dosya Silme
 ```http
 DELETE /api/files/{fileName}
-Authorization: Bearer JWT_TOKEN
+Authorization: Bearer ACCESS_TOKEN
 ```
 
 ## Hata Yanıtları
@@ -274,14 +306,29 @@ API aşağıdaki hata formatında yanıt verir:
 }
 ```
 
-Genel HTTP Durum Kodları:
-- 200: Başarılı
-- 201: Başarılı oluşturma
-- 204: Başarılı silme
-- 400: Geçersiz istek
-- 401: Yetkisiz erişim
-- 404: Bulunamadı
-- 500: Sunucu hatası
+## Token Kullanımı
+
+1. **Access Token**
+   - Her istekte `Authorization: Bearer ACCESS_TOKEN` header'ı ile gönderilmelidir
+   - 1 saat geçerlidir
+   - Süresi dolduğunda refresh token ile yenilenmelidir
+
+2. **Refresh Token**
+   - Login sırasında alınır
+   - 30 gün geçerlidir
+   - Access token süresi dolduğunda yeni token almak için kullanılır
+   - Güvenlik nedeniyle client tarafında güvenli bir şekilde saklanmalıdır
+
+3. **Token Yenileme Akışı**
+   - Access token süresi dolduğunda
+   - Refresh token ile `/api/users/refresh-token` endpoint'ine istek atılır
+   - Geçerli bir refresh token varsa yeni bir access token alınır
+   - Refresh token süresi dolmuşsa kullanıcı tekrar login olmalıdır
+
+4. **Çıkış İşlemi**
+   - Refresh token `/api/users/logout` endpoint'ine gönderilir
+   - Refresh token geçersiz kılınır
+   - Tüm oturumlar sonlanır
 
 ## Geliştirme
 

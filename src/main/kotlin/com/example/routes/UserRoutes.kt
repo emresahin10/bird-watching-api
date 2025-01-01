@@ -48,7 +48,11 @@ fun Route.userRoutes() {
 
         post("/login") {
             data class LoginRequest(val email: String, val password: String)
-            data class LoginResponse(val token: String, val user: User)
+            data class LoginResponse(
+                val accessToken: String,
+                val refreshToken: String,
+                val user: User
+            )
             
             val loginRequest = call.receive<LoginRequest>()
             
@@ -59,8 +63,54 @@ fun Route.userRoutes() {
                 return@post call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
             }
             
-            val token = JWTConfig.makeToken(user.id.toString())
-            call.respond(LoginResponse(token, user.copy(passwordHash = "")))
+            val accessToken = JWTConfig.makeAccessToken(user.id.toString())
+            val refreshToken = JWTConfig.makeRefreshToken(user.id.toString())
+            val refreshTokenExpiresAt = System.currentTimeMillis() + 3600000 // 30 days
+
+            // Update user with refresh token
+            repository.updateRefreshToken(user.id, refreshToken, refreshTokenExpiresAt)
+            
+            call.respond(LoginResponse(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                user = user.copy(passwordHash = "", refreshToken = null, refreshTokenExpiresAt = null)
+            ))
+        }
+
+        post("/refresh-token") {
+            data class RefreshTokenRequest(val refreshToken: String)
+            data class RefreshTokenResponse(val accessToken: String)
+
+            val request = call.receive<RefreshTokenRequest>()
+            
+            // Find user by refresh token
+            val user = repository.findByRefreshToken(request.refreshToken)
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, "Invalid refresh token")
+
+            // Check if refresh token is expired
+            if (user.refreshTokenExpiresAt != null && user.refreshTokenExpiresAt < System.currentTimeMillis()) {
+                // Clear expired refresh token
+                repository.updateRefreshToken(user.id, null, null)
+                return@post call.respond(HttpStatusCode.Unauthorized, "Refresh token expired")
+            }
+
+            // Generate new access token
+            val newAccessToken = JWTConfig.makeAccessToken(user.id.toString())
+            call.respond(RefreshTokenResponse(newAccessToken))
+        }
+
+        post("/logout") {
+            data class LogoutRequest(val refreshToken: String)
+
+            val request = call.receive<LogoutRequest>()
+            
+            // Find user by refresh token
+            val user = repository.findByRefreshToken(request.refreshToken)
+                ?: return@post call.respond(HttpStatusCode.OK)
+
+            // Clear refresh token
+            repository.updateRefreshToken(user.id, null, null)
+            call.respond(HttpStatusCode.OK)
         }
 
         put("/{id}") {

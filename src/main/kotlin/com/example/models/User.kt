@@ -9,6 +9,8 @@ data class User(
     val email: String,
     val passwordHash: String,
     val name: String,
+    val refreshToken: String? = null,
+    val refreshTokenExpiresAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) 
