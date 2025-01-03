@@ -10,6 +10,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
+import kotlinx.serialization.Serializable
 
 fun Route.userRoutes() {
     val repository = UserRepository()
@@ -21,10 +22,9 @@ fun Route.userRoutes() {
         }
 
         get("/{id}") {
-            val id = call.parameters["id"]?.let { ObjectId(it) }
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid ID")
+            val userId = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid ID")
             
-            val user = repository.findById(id)
+            val user = repository.findByUserId(userId)
                 ?: return@get call.respond(HttpStatusCode.NotFound, "User not found")
             
             call.respond(user)
@@ -47,7 +47,9 @@ fun Route.userRoutes() {
         }
 
         post("/login") {
+            @Serializable
             data class LoginRequest(val email: String, val password: String)
+            @Serializable
             data class LoginResponse(
                 val accessToken: String,
                 val refreshToken: String,
@@ -63,8 +65,8 @@ fun Route.userRoutes() {
                 return@post call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
             }
             
-            val accessToken = JWTConfig.makeAccessToken(user.id.toString())
-            val refreshToken = JWTConfig.makeRefreshToken(user.id.toString())
+            val accessToken = JWTConfig.makeAccessToken(user.userId)
+            val refreshToken = JWTConfig.makeRefreshToken(user.userId)
             val refreshTokenExpiresAt = System.currentTimeMillis() + 3600000 // 30 days
 
             // Update user with refresh token
@@ -78,7 +80,9 @@ fun Route.userRoutes() {
         }
 
         post("/refresh-token") {
+            @Serializable
             data class RefreshTokenRequest(val refreshToken: String)
+            @Serializable
             data class RefreshTokenResponse(val accessToken: String)
 
             val request = call.receive<RefreshTokenRequest>()
@@ -95,7 +99,7 @@ fun Route.userRoutes() {
             }
 
             // Generate new access token
-            val newAccessToken = JWTConfig.makeAccessToken(user.id.toString())
+            val newAccessToken = JWTConfig.makeAccessToken(user.userId)
             call.respond(RefreshTokenResponse(newAccessToken))
         }
 

@@ -12,6 +12,9 @@ class UserRepository {
 
     suspend fun findById(id: ObjectId): User? = collection.findOneById(id)
 
+    suspend fun findByUserId(userId: String): User? =
+        collection.findOne(User::userId eq userId)
+
     suspend fun findByEmail(email: String): User? =
         collection.findOne(User::email eq email)
 
